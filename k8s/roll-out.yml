@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+
+metadata:
+  name: self-healing-rollout
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: self-healing-app
+
+  template:
+    metadata:
+      labels:
+        app: self-healing-app
+
+    spec:
+      containers:
+      - name: self-healing-app
+        image: tejaskalal/self-healing-app:v2
+
+        ports:
+        - containerPort: 3000
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+
+  strategy:
+    canary:
+      steps:
+      - setWeight: 20
+
+      - pause:
+          duration: 30s
+
+      - setWeight: 50
+
+      - pause:
+          duration: 30s
+
+      - setWeight: 100
